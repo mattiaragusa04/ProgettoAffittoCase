@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "prenotazione")
@@ -16,9 +17,9 @@ public class Prenotazione {
     @Column(name = "id")
     private Integer id;
     @Column(name = "data_check_in")
-    private String data_check_in;
+    private LocalDate data_check_in;
     @Column(name = "data_check_out")
-    private String data_check_out;
+    private LocalDate data_check_out;
     @Column(name = "prezzo_totale")
     private Double prezzo_totale;
     @Column(name = "cliente_id")
@@ -26,7 +27,7 @@ public class Prenotazione {
     @Column(name = "stanza_id")
     private Integer stanza_id;
 
-    public Prenotazione(String data_check_in, String data_check_out, Double prezzo_totale, Integer cliente_id, Integer stanza_id) {
+    public Prenotazione(LocalDate data_check_in, LocalDate data_check_out, Double prezzo_totale, Integer cliente_id, Integer stanza_id) {
         this.data_check_in = data_check_in;
         this.data_check_out = data_check_out;
         this.prezzo_totale = prezzo_totale;
@@ -39,10 +40,10 @@ public class Prenotazione {
     public Integer getId() {
         return id;
     }
-    public String getData_check_in() {
+    public LocalDate getData_check_in() {
         return data_check_in;
     }
-    public String getData_check_out() {
+    public LocalDate getData_check_out() {
         return data_check_out;
     }
     public Double getPrezzo_totale() {

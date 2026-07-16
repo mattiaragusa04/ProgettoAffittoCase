@@ -5,10 +5,9 @@ import it.case_vacanze.manager.repository.ClientiRepository;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,11 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/clienti")
-@CrossOrigin(origins = "*") // Abilita le richieste dal frontend (React)
 public class ClientiController {
 
-    @Autowired
-    private ClientiRepository clientiRepository;
+    private final ClientiRepository clientiRepository;
+
+    public ClientiController(ClientiRepository clientiRepository) {
+        this.clientiRepository = clientiRepository;
+    }
 
     @GetMapping
     public List<Clienti> getAllClienti() {

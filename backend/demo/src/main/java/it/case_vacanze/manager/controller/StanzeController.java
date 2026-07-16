@@ -2,20 +2,25 @@ package it.case_vacanze.manager.controller;
 
 import it.case_vacanze.manager.entity.Stanze;
 import it.case_vacanze.manager.repository.StanzeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/stanze")
-@CrossOrigin(origins = "*")
 public class StanzeController {
 
-    @Autowired
-    private StanzeRepository stanzeRepository;
+    private final StanzeRepository stanzeRepository;
+
+    public StanzeController(StanzeRepository stanzeRepository) {
+        this.stanzeRepository = stanzeRepository;
+    }
 
     @GetMapping
     public List<Stanze> getAllStanze() {

@@ -1,6 +1,5 @@
 package it.case_vacanze.manager.controller;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/recensioni")
-@CrossOrigin
 public class RecensioneController {
 
     private final RecensioneRepository recensioneRepository;
