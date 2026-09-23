@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Title from '../components/Title'
 import HotelCard from '../components/HotelCard'
+import { apiGet } from '../api';
 /**
  * AllRooms
  * 
@@ -30,14 +31,11 @@ import HotelCard from '../components/HotelCard'
 function AllRooms() {
     const [loading, setLoading] = useState(true);
     const [rooms, setRooms] = useState([]);
+    const [errore, setErrore] = useState(null);
     useEffect(() => {
             const fetchRooms = async () => {
-            let url = 'http://localhost:8080/stanze';   
             try {
-                const response = await fetch(url);
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log(data);
+                    const data = await apiGet('/stanze');
                     const adaptedRooms = data.map(stanza => ({
                     _id: stanza.id,
                     hotel: { name: "Ragusa B&B", address: "Palermo", rating: stanza.valutazione },
@@ -51,12 +49,8 @@ function AllRooms() {
             }));
 
             setRooms(adaptedRooms);
-
-                } else {
-                    console.error("Errore nel recupero delle stanze");
-                }
             } catch (error) {
-                console.error("Errore di connessione:", error);
+                setErrore(error.message);
             }finally{
                 setLoading(false);
             }
@@ -80,7 +74,7 @@ function AllRooms() {
               <HotelCard key={room._id || index} room={room} />
             ))}
             {rooms.length === 0 && 
-              <div><Title align = 'left' subTitle = 'Nessuna stanza disponibile'></Title></div>}
+              <div><Title align = 'left' subTitle = {errore ?? 'Nessuna stanza disponibile'}></Title></div>}
           </div>
         )}
     </div>

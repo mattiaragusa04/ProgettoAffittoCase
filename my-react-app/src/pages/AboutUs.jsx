@@ -40,7 +40,8 @@ export default function AboutUs() {
                     </div>
                     
                 </div>
-                <div className="gap-4">
+                {/* scroll-mt: lascia spazio per la navbar fissa quando si arriva da /About#contatti */}
+                <div id="contatti" className="gap-4 scroll-mt-32">
                     <Title title = "Contattaci" align = "center" ></Title>
                     <p className="text-center text-sm text-gray-500 mt-2">Hai domande o vuoi saperne di più sui nostri servizi? Contattaci, siamo qui per aiutarti!</p>
                     <div className="flex items-center justify-center gap-6 mt-6">

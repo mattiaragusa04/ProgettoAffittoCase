@@ -1,11 +1,10 @@
 import {assets} from '../assets/assets.js'
 import {Link} from 'react-router-dom'
 import Title from './Title.jsx'
-import {useNavigate} from 'react-router-dom';
 import Modal from './Modal.jsx';
 import { useState } from 'react';
+import { apiPost } from '../api';
 export default function Footer() {
-    const navigate = useNavigate();
     const [modal, setModal] = useState({ show: false, title: '', message: '', type: '', onConfirm: null });
     const [email, setEmail] = useState('');
 
@@ -17,19 +16,12 @@ export default function Footer() {
             return;
         }
         try {
-            const response = await fetch('http://localhost:8080/newsletter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email : email })
-            });
-            if (!response.ok) {
-                throw new Error ("Errore server : " + response.status);
-            }
+            await apiPost('/newsletter', { email });
             setModal({show: true, title: 'Successo', message: 'Ti sei iscritto alla newsletter con successo!', type: 'success', onConfirm: null});
             setEmail('');
         } catch (error) {
             console.error(error);
-            setModal({ show: true, title: 'Errore', message: 'Si è verificato un errore durante l\'iscrizione.', type: 'error', onConfirm: null });
+            setModal({ show: true, title: 'Errore', message: error.message, type: 'error', onConfirm: null });
         } 
     };
     const closeModal = () => {     
@@ -42,7 +34,7 @@ export default function Footer() {
             <div className="flex flex-col md:flex-row justify-between w-full gap-10 border-b border-gray-500/30 pb-6">
                 <div className="md:max-w-96 mt-2 text-center md:text-left">
                     <Link to={'/'}>
-                        <img onClick = {() => window.scrollTo(0,0)} src = {assets.logo} alt = "logo" className = "w-64 opacity-80 invert mx-auto md:mx-0" ></img>
+                        <img src = {assets.logo} alt = "logo" className = "w-64 opacity-80 invert mx-auto md:mx-0" ></img>
                     </Link>
                     <p className=" text-sm">
                         Seguici anche sui nostri social, rimani aggiornato sulle nostre offerte e vienici a trovare, ti aspettiamo
@@ -58,9 +50,12 @@ export default function Footer() {
                 <div>
                     <Title title="Compagnia" align = "left"/>
                     <ul className="text-sm space-y-2">
-                        <li><a href="#" onClick = {() => window.scrollTo(0,0)}>Home</a></li>
-                        <li><a href="#" onClick = {()=> navigate("/About")}>Chi Siamo</a></li>
-                        <li><a href="#">Contattaci</a></li>
+                        <li><Link to="/">Home</Link></li>
+                        <li><Link to="/allRooms">Stanze</Link></li>
+                        <li><Link to="/tutteOfferte">Offerte</Link></li>
+                        <li><Link to="/recensioni">Recensioni</Link></li>
+                        <li><Link to="/About">Chi Siamo</Link></li>
+                        <li><Link to="/About#contatti">Contattaci</Link></li>
                         <li><a href="#">Privacy policy</a></li>
                     </ul>
                 </div>

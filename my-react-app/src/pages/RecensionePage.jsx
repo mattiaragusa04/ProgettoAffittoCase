@@ -1,26 +1,17 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import Title from "../components/Title"
 import { useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal';
+import { apiPost } from '../api';
 function RecensionePage() {
     const [modal, setModal] = useState({ show: false, title: '', message: '', type: '' });
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    // Utente loggato, letto una volta sola all'apertura della pagina
+    const [user] = useState(() => JSON.parse(localStorage.getItem('user')));
     const [rating, setRating] = useState(5); // Default 5 stelle
     const [formData, setFormData] = useState({
         message: ''
     });
-
-    // Recupera l'utente loggato al caricamento
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        } else {
-            // Se non è loggato, potresti volerlo reindirizzare o mostrare un avviso
-            // navigate('/login');
-        }
-    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -47,25 +38,13 @@ function RecensionePage() {
         };
 
         try {
-            const response = await fetch("http://localhost:8080/recensioni", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                throw new Error(`Errore server: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await apiPost('/recensioni', payload);
             console.log("Dati Inviati: ", data);
             setModal({ show: true, title: "Recensione Inviata", message: "La tua recensione è stata inviata con successo!", type: "success" });
 
         } catch (error) {
             console.error(error);
-            setModal({ show: true, title: "Errore", message: "Errore durante l'invio della recensione.", type: "error" });
+            setModal({ show: true, title: "Errore", message: error.message, type: "error" });
         }
     }
     

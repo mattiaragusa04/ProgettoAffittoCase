@@ -2,30 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Title from "../components/Title"
 import HotelCard from '../components/HotelCard';
+import { apiGet } from '../api';
 
 function Rooms() {
   const [searchParams] = useSearchParams();
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errore, setErrore] = useState(null);
 
   useEffect(() => {
     const fetchRooms = async () => {
       setLoading(true);
+      setErrore(null);
       const checkIn = searchParams.get('checkIn');
       const checkOut = searchParams.get('checkOut');
       const guests = searchParams.get('guests');
 
-      let url = 'http://localhost:8080/stanze';
-      
+      let path = '/stanze';
+
       // Se ci sono parametri di ricerca, usiamo l'endpoint di ricerca
       if (checkIn && checkOut && guests) {
-        url = `http://localhost:8080/stanze/search?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`;
+        path = `/stanze/search?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`;
       }
 
       try {
-        const response = await fetch(url);
-        if (response.ok) {
-          const data = await response.json();
+          const data = await apiGet(path);
           
           // Adattiamo i dati del DB Java al formato che HotelCard si aspetta
           const adaptedRooms = data.map(stanza => ({
@@ -40,11 +41,9 @@ function Rooms() {
             ...stanza
           }));
           setRooms(adaptedRooms);
-        } else {
-          console.error("Errore nel recupero delle stanze");
-        }
       } catch (error) {
-        console.error("Errore di connessione:", error);
+        setRooms([]);
+        setErrore(error.message);
       } finally {
         setLoading(false);
       }
@@ -69,7 +68,7 @@ function Rooms() {
             <HotelCard key={room._id || index} room={room} />
           ))}
           {rooms.length === 0 && 
-            <div><Title align = 'left' subTitle = 'Nessuna stanza disponibile per i criteri selezionati.'></Title></div>}
+            <div><Title align = 'left' subTitle = {errore ?? 'Nessuna stanza disponibile per i criteri selezionati.'}></Title></div>}
         </div>
       )}
     </div>

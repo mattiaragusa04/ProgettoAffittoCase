@@ -4,6 +4,7 @@ import {useState} from "react";
 import {useGoogleLogin} from "@react-oauth/google";
 import Modal from "../components/Modal";
 import Title from '../components/Title';
+import { apiPost } from '../api';
 export default function RegisterPage() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -58,15 +59,7 @@ export default function RegisterPage() {
         delete dataToSend.confirmPassword;
 
         try{
-            const response = await fetch('http://localhost:8080/clienti', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataToSend) // Inviamo solo i dati necessari al backend
-            });
-            if (!response.ok) {
-                throw new Error(`Errore server: ${response.status}`);
-            }
-            const data = await response.json();
+            const data = await apiPost('/clienti', dataToSend); // Inviamo solo i dati necessari al backend
             console.log("Dati Inviati: ", data);
             localStorage.setItem('user', JSON.stringify(data));
             setModal({
@@ -81,7 +74,7 @@ export default function RegisterPage() {
             setModal({
                 show: true,
                 title: "Errore",
-                message: "Si sono verificati degli errori durante la registrazione.",
+                message: error.message,
                 type: "error"
             });
         }
@@ -95,15 +88,13 @@ export default function RegisterPage() {
                 const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                     headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
                 });
+                if (!userInfoResponse.ok) {
+                    throw new Error("Google non ha restituito i dati del profilo. Riprova.");
+                }
                 const googleUser = await userInfoResponse.json();
 
                 // 2. Invia i dati utente decodificati al backend
-                const response = await fetch('http://localhost:8080/clienti/google', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(googleUser)
-                });
-                const userInfo = await response.json();
+                const userInfo = await apiPost('/clienti/google', googleUser);
                 console.log("Utente: ", userInfo);
                 localStorage.setItem('user', JSON.stringify(userInfo));
                 setModal({
@@ -118,7 +109,7 @@ export default function RegisterPage() {
                 setModal({
                     show: true,
                     title: "Errore",
-                    message: "Errore durante il login con Google.",
+                    message: error.message,
                     type: "error"
                 });
             }

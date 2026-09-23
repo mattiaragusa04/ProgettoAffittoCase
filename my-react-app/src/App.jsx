@@ -1,4 +1,5 @@
-import Navbar from './components/navbar';
+import Navbar from './components/Navbar';
+import ScrollToTop from './components/ScrollToTop';
 import {useLocation} from "react-router-dom";
 import {Route, Routes} from "react-router-dom";
 import Home from "./pages/Home";
@@ -14,6 +15,7 @@ function App(){
   const isOwnerPath = useLocation().pathname.includes("owner"); //nascosta: qui dentro c'è il proprietario, che sarei io!
   return (
       <div>
+        <ScrollToTop />
         {!isOwnerPath && <Navbar/>}
         <div className = "min-h-[70vh]">
           <Routes>

@@ -2,26 +2,20 @@ import React, {useEffect, useState} from 'react'
 import Title from './Title'
 import {assets} from '../assets/assets'
 import { useNavigate } from 'react-router-dom';
+import { apiGet } from '../api';
 
 function OfferteEsclusive(){
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const[offerte, setOfferte] = useState([]);
+  const [errore, setErrore] = useState(null);
 
   useEffect(()=>{
     const fetchOfferte = async()=>{
-      let url = 'http://localhost:8080/offerte';
       try{
-        const response = await fetch(url);
-        if(response.ok){
-          const data = await response.json();
-          console.log(data);
-          setOfferte(data);
-        }else{
-          console.error("Errore nel recupero delle offerte esclusive");
-        }
+        setOfferte(await apiGet('/offerte'));
       }catch(error){
-        console.error("Errore di connessione:", error);
+        setErrore(error.message);
       } finally {
         setLoading(false);
       }
@@ -70,7 +64,7 @@ function OfferteEsclusive(){
             ))}
           </div>
         ) : (
-          <p className="mt-12">Nessuna offerta disponibile al momento.</p>
+          <p className="mt-12">{errore ?? 'Nessuna offerta disponibile al momento.'}</p>
         )}
     </div>
   )

@@ -1,24 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import Title from '../components/Title';
+import { apiGet } from '../api';
 
 function TutteOfferte() {
   const [loading, setLoading] = useState(true);
   const [offerte, setOfferte] = useState([]);
+  const [errore, setErrore] = useState(null);
 
   useEffect(() => {
     const fetchOfferte = async () => {
-      let url = 'http://localhost:8080/offerte';
       try {
-        const response = await fetch(url);
-        if (response.ok) {
-          const data = await response.json();
-          console.log(data);
-          setOfferte(data);
-        } else {
-          console.error("Errore nel recupero delle offerte");
-        }
+        setOfferte(await apiGet('/offerte'));
       } catch (error) {
-        console.error("Errore di connessione:", error);
+        setErrore(error.message);
       } finally {
         setLoading(false);
       }
@@ -63,7 +57,7 @@ function TutteOfferte() {
           ))}
         </div>
       ) : (
-        <div className="mt-12"><Title align="left" subTitle="Nessuna offerta disponibile al momento." /></div>
+        <div className="mt-12"><Title align="left" subTitle={errore ?? "Nessuna offerta disponibile al momento."} /></div>
       )}
     </div>
   );

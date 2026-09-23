@@ -5,6 +5,7 @@ import {useNavigate} from 'react-router-dom';
 import {useGoogleLogin} from "@react-oauth/google"
 import Modal from '../components/Modal';
 import Title from '../components/Title';
+import { apiPost } from '../api';
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const togglePasswordVisibility = () => {
@@ -49,15 +50,7 @@ export default function LoginPage() {
     const handleSubmit = async (e) => {
             e.preventDefault();
             try{
-                const response = await fetch('http://localhost:8080/clienti/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-                if (!response.ok) {
-                    throw new Error(`Errore server: ${response.status}`);
-                }
-                const data = await response.json();
+                const data = await apiPost('/clienti/login', formData);
                 localStorage.setItem('user', JSON.stringify(data));
                 
                 // Se "Ricordami" è attivo, salviamo email e password
@@ -82,7 +75,7 @@ export default function LoginPage() {
                 setModal({
                     show: true,
                     title: "Errore",
-                    message: "Email o Password errati. Riprova.",
+                    message: error.message,
                     type: "error"
                 });
             }
@@ -95,15 +88,13 @@ export default function LoginPage() {
                 const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                     headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
                 });
+                if (!userInfoResponse.ok) {
+                    throw new Error("Google non ha restituito i dati del profilo. Riprova.");
+                }
                 const googleUser = await userInfoResponse.json();
 
                 // 2. Invia i dati utente decodificati al backend
-                const response = await fetch('http://localhost:8080/clienti/google', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(googleUser)
-                });
-                const userInfo = await response.json();
+                const userInfo = await apiPost('/clienti/google', googleUser);
                 console.log("Utente: ", userInfo);
                 localStorage.setItem('user', JSON.stringify(userInfo));
                 if (rememberMe) {
@@ -125,7 +116,7 @@ export default function LoginPage() {
                 setModal({
                     show: true,
                     title: "Errore",
-                    message: "Errore durante il login con Google.",
+                    message: error.message,
                     type: "error"
                 });
             }

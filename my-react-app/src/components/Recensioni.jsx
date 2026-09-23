@@ -1,6 +1,7 @@
 import React from 'react';
 import Title from './Title';
 import { useState, useEffect } from 'react';
+import { apiGet } from '../api';
 
 const Recensioni = () => {
 
@@ -8,6 +9,7 @@ const Recensioni = () => {
     const [currentIndex, setCurrentIndex] = React.useState(0);
     const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
     const [recensioni, setRecensioni ]= useState([]);
+    const [errore, setErrore] = useState(null);
 
     React.useEffect(() => {
         const handleResize = () => {
@@ -40,18 +42,10 @@ const Recensioni = () => {
 
     useEffect(() => {
         const fetchRecensioni = async () => {
-            let url = 'http://localhost:8080/recensioni';
             try{
-                const response = await fetch(url);
-                if(response.ok){
-                    const data = await response.json();
-                    console.log(data);
-                    setRecensioni(data);
-                }else{
-                    console.error("Errore nel recupero delle recensioni");
-                }
+                setRecensioni(await apiGet('/recensioni'));
             }catch(error){
-                console.error("Errore di connessione:", error);
+                setErrore(error.message);
             } finally {
                 setLoading(false);
             } 
@@ -98,7 +92,7 @@ const Recensioni = () => {
                                         </div>
                                     </div>
                                 </div>
-                            )) : <p className="col-span-3 text-center">Nessuna recensione disponibile al momento.</p>
+                            )) : <p className="col-span-3 text-center">{errore ?? 'Nessuna recensione disponibile al momento.'}</p>
                         }
                     </div>
                 </div>
