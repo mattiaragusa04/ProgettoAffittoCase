@@ -22,15 +22,18 @@ public class Prenotazione {
     private LocalDate data_check_out;
     @Column(name = "prezzo_totale")
     private Double prezzo_totale;
+    @Column(name = "numero_persone")
+    private Integer numero_persone;
     @Column(name = "cliente_id")
     private Integer cliente_id;
     @Column(name = "stanza_id")
     private Integer stanza_id;
 
-    public Prenotazione(LocalDate data_check_in, LocalDate data_check_out, Double prezzo_totale, Integer cliente_id, Integer stanza_id) {
+    public Prenotazione(LocalDate data_check_in, LocalDate data_check_out, Double prezzo_totale, Integer numero_persone, Integer cliente_id, Integer stanza_id) {
         this.data_check_in = data_check_in;
         this.data_check_out = data_check_out;
         this.prezzo_totale = prezzo_totale;
+        this.numero_persone = numero_persone;
         this.cliente_id = cliente_id;
         this.stanza_id = stanza_id;
     }
@@ -48,6 +51,9 @@ public class Prenotazione {
     }
     public Double getPrezzo_totale() {
         return prezzo_totale;
+    }
+    public Integer getNumero_persone() {
+        return numero_persone;
     }
     public Integer getCliente_id() {
         return cliente_id;

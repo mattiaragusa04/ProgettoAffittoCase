@@ -1,28 +1,38 @@
 package it.case_vacanze.manager.controller;
+
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import it.case_vacanze.manager.entity.Prenotazione;
-import it.case_vacanze.manager.repository.PrenotazioneRepository;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import it.case_vacanze.manager.dto.request.PrenotazioneRequest;
+import it.case_vacanze.manager.dto.response.PrenotazioneResponse;
+import it.case_vacanze.manager.services.PrenotazioneService;
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/prenotazione")
 public class PrenotazioneController {
-    
-    private final PrenotazioneRepository prenotazioneRepository;
 
-    public PrenotazioneController(PrenotazioneRepository prenotazioneRepository) {
-        this.prenotazioneRepository = prenotazioneRepository;
+    private final PrenotazioneService prenotazioneService;
+
+    public PrenotazioneController(PrenotazioneService prenotazioneService) {
+        this.prenotazioneService = prenotazioneService;
     }
 
     @GetMapping
-    public List<Prenotazione> getAllPrenotazioni() { return prenotazioneRepository.findAll(); }
+    public List<PrenotazioneResponse> getAllPrenotazioni() {
+        return prenotazioneService.findAll();
+    }
 
     @PostMapping
-    public Prenotazione createPrenotazione(@RequestBody Prenotazione prenotazione) {
-        return prenotazioneRepository.save(prenotazione);
+    @ResponseStatus(HttpStatus.CREATED)
+    public PrenotazioneResponse createPrenotazione(@Valid @RequestBody PrenotazioneRequest req) {
+        return prenotazioneService.crea(req);
     }
 }

@@ -1,33 +1,38 @@
 package it.case_vacanze.manager.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
-
-import it.case_vacanze.manager.repository.RecensioneRepository;
-import it.case_vacanze.manager.entity.Recensioni;
-import java.util.List;
+import it.case_vacanze.manager.dto.request.RecensioneRequest;
+import it.case_vacanze.manager.dto.response.RecensioneResponse;
+import it.case_vacanze.manager.services.RecensioneService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/recensioni")
 public class RecensioneController {
 
-    private final RecensioneRepository recensioneRepository;
+    private final RecensioneService recensioneService;
 
-    public RecensioneController(RecensioneRepository recensioneRepository) {
-        this.recensioneRepository = recensioneRepository;
+    public RecensioneController(RecensioneService recensioneService) {
+        this.recensioneService = recensioneService;
     }
 
     @GetMapping
-    public List<Recensioni> getAllRecensioni() { return recensioneRepository.findAll(); }
+    public List<RecensioneResponse> getAllRecensioni() {
+        return recensioneService.findAll();
+    }
 
     @PostMapping
-    public Recensioni createRecensione(@RequestBody Recensioni recensione) {
-        return recensioneRepository.save(recensione);
+    @ResponseStatus(HttpStatus.CREATED)
+    public RecensioneResponse createRecensione(@Valid @RequestBody RecensioneRequest req) {
+        return recensioneService.crea(req);
     }
-    
-
 }

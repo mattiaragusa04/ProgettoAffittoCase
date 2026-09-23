@@ -27,10 +27,11 @@ public class Recensioni{
     @JoinColumn(name = "cliente_id", insertable = false, updatable = false)
     private Clienti cliente;
 
-    public Recensioni(String testo, Integer valutazione, Integer cliente_id) {
+    public Recensioni(String testo, Integer valutazione, Clienti cliente) {
         this.testo = testo;
         this.valutazione = valutazione;
-        this.cliente_id = cliente_id;
+        this.cliente = cliente;
+        this.cliente_id = cliente.getId();
     }
     public Recensioni(){}
 

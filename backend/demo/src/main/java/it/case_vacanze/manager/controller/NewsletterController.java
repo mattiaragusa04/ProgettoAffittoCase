@@ -1,54 +1,38 @@
 package it.case_vacanze.manager.controller;
 
-import it.case_vacanze.manager.entity.Newsletter;
-import it.case_vacanze.manager.repository.NewsletterRepository;
-import it.case_vacanze.manager.services.EmailService;
-
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import it.case_vacanze.manager.dto.request.NewsletterRequest;
+import it.case_vacanze.manager.dto.response.NewsletterResponse;
+import it.case_vacanze.manager.services.NewsletterService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/newsletter")
 public class NewsletterController {
 
-    private final NewsletterRepository newsletterRepository;
-    private final EmailService emailService;
-    
-    public NewsletterController(NewsletterRepository newsletterRepository, EmailService emailService) {
-        this.newsletterRepository = newsletterRepository;
-        this.emailService = emailService;
+    private final NewsletterService newsletterService;
+
+    public NewsletterController(NewsletterService newsletterService) {
+        this.newsletterService = newsletterService;
     }
 
     @GetMapping
-    public List<Newsletter> getAllNewsletter() {
-        return newsletterRepository.findAll();
+    public List<NewsletterResponse> getAllNewsletter() {
+        return newsletterService.findAll();
     }
 
     @PostMapping
-    public ResponseEntity<?> iscriviti(@RequestBody Newsletter newsletter) {
-        if (newsletterRepository.findByEmail(newsletter.getEmail()) != null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email già iscritta alla newsletter");
-        }
-        Newsletter newsletterSalvata = newsletterRepository.save(newsletter);
-
-        // Invia email di benvenuto
-        try{
-            String oggetto = "Benvenuto alla Newsletter di Case Vacanze!";
-            String testo = "Grazie per esserti iscritto alla nostra newsletter! Riceverai aggiornamenti su offerte e novità.";
-            emailService.inviaEmail(newsletter.getEmail(), oggetto, testo);
-        } catch (Exception e) {
-            // Log dell'errore (puoi usare un logger come Log4j o SLF4J)
-            System.err.println("Errore durante l'invio dell'email: " + e.getMessage());
-        }
-
-        return ResponseEntity.ok(newsletterSalvata);
+    @ResponseStatus(HttpStatus.CREATED)
+    public NewsletterResponse iscriviti(@Valid @RequestBody NewsletterRequest req) {
+        return newsletterService.iscrivi(req);
     }
 }
