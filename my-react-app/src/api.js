@@ -10,6 +10,17 @@ export class ApiError extends Error {
     }
 }
 
+// Sessione: dopo login o registrazione il backend restituisce { token, utente }
+export function salvaSessione({ token, utente }) {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(utente));
+}
+
+export function chiudiSessione() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+}
+
 export const apiGet = (path) => richiesta(path, { method: 'GET' });
 
 export const apiPost = (path, body) => richiesta(path, {
@@ -18,7 +29,19 @@ export const apiPost = (path, body) => richiesta(path, {
     body: JSON.stringify(body),
 });
 
+export const apiPut = (path, body) => richiesta(path, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+});
+
 async function richiesta(path, options) {
+    // Se l'utente è loggato, ogni richiesta porta con sé il suo token
+    const token = localStorage.getItem('token');
+    if (token) {
+        options.headers = { ...options.headers, Authorization: `Bearer ${token}` };
+    }
+
     let response;
     try {
         response = await fetch(API_URL + path, options);
@@ -38,6 +61,8 @@ async function richiesta(path, options) {
 function messaggioErrore(status, data) {
     if (data?.dettagli) return Object.values(data.dettagli).join('. ');
     if (data?.messaggio) return data.messaggio;
+    if (status === 401) return 'Devi effettuare il login.';
+    if (status === 403) return 'Non hai i permessi per questa operazione.';
     if (status >= 500) return 'Errore interno del server. Riprova più tardi.';
     return `Richiesta non riuscita (errore ${status}).`;
 }

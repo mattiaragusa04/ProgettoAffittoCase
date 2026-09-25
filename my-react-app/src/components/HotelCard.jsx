@@ -1,8 +1,10 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useLocation} from 'react-router-dom';
 import {assets} from '../assets/assets.js';
 const HotelCard = ({room, index}) => {
     const [tilt, setTilt] = React.useState({ x: 0, y: 0 });
+    // Dalla pagina dei risultati passa al dettaglio anche date e ospiti cercati
+    const { search } = useLocation();
 
     // Adjust the threshold value to control the tilt effect
     const threshold = 12;
@@ -15,7 +17,7 @@ const HotelCard = ({room, index}) => {
     };
 
     return (
-        <Link to = {'/room/' + room._id} onClick = {() => window.scrollTo(0, 0)} key={room._id}>
+        <Link to = {'/room/' + room._id + search} key={room._id}>
             <div className="rounded-xl shadow-xl overflow-hidden transition-transform duration-200 ease-out cursor-pointer max-w-80 bg-white"
                 onMouseMove={handleMove}
                 onMouseLeave={() => setTilt({ x: 0, y: 0 })}
@@ -27,7 +29,7 @@ const HotelCard = ({room, index}) => {
                     <div className = "flex items-center justify-between">
                         <p className = "font-playfair text-xl font-medium text-gray-800">{room.hotel.name}</p>
                         <div className = "flex items-center gap-1">
-                            <img src = {assets.starIconFilled} alt = "star-icon" />4.5
+                            <img src = {assets.starIconFilled} alt = "star-icon" />{room.hotel.rating}
                         </div>
                     </div>
                     <div className = "flex items-center gap-1 text-sm">

@@ -69,7 +69,7 @@ function AllRooms() {
         {loading ? (
           <p>Caricamento in corso...</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
             {rooms.map((room, index) => (
               <HotelCard key={room._id || index} room={room} />
             ))}

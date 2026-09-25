@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {useNavigate} from 'react-router-dom';
-import {useGoogleLogin} from "@react-oauth/google"
 import Modal from '../components/Modal';
 import Title from '../components/Title';
-import { apiPost } from '../api';
+import { apiPost, salvaSessione } from '../api';
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const togglePasswordVisibility = () => {
@@ -19,21 +18,16 @@ export default function LoginPage() {
         onConfirm: null
     });
     const navigate = useNavigate();
-    const [rememberMe, setRememberMe] = useState(false);
 
-    // Al caricamento, controlliamo se ci sono credenziali salvate
-    useEffect(() => {
-        const savedEmail = localStorage.getItem('rememberedEmail');
-        const savedPassword = localStorage.getItem('rememberedPassword');
-        if (savedEmail && savedPassword) {
-            setFormData({ email: savedEmail, password: savedPassword });
-            setRememberMe(true);
-        }
-    }, []);
+    // Se ci sono credenziali salvate con "Ricordami", il form parte già compilato
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    const savedPassword = localStorage.getItem('rememberedPassword');
+    const credenzialiSalvate = Boolean(savedEmail && savedPassword);
 
+    const [rememberMe, setRememberMe] = useState(credenzialiSalvate);
     const [formData, setFormData] = useState({
-            email : '',
-            password : ''
+            email : credenzialiSalvate ? savedEmail : '',
+            password : credenzialiSalvate ? savedPassword : ''
     });
     
     const handleChange = (e) => {
@@ -50,8 +44,7 @@ export default function LoginPage() {
     const handleSubmit = async (e) => {
             e.preventDefault();
             try{
-                const data = await apiPost('/clienti/login', formData);
-                localStorage.setItem('user', JSON.stringify(data));
+                salvaSessione(await apiPost('/clienti/login', formData));
                 
                 // Se "Ricordami" è attivo, salviamo email e password
                 if (rememberMe) {
@@ -62,7 +55,6 @@ export default function LoginPage() {
                     localStorage.removeItem('rememberedPassword');
                 }
 
-                console.log("Dati Inviati: ", data);
                 setModal({
                     show: true,
                     title: "Accesso Effettuato",
@@ -80,49 +72,6 @@ export default function LoginPage() {
                 });
             }
     }
-    const loginConGoogle = useGoogleLogin({
-        onSuccess: async (tokenResponse) => {
-            console.log("Token di accesso: ", tokenResponse.access_token);
-            try{
-                // 1. Recupera i dati utente da Google usando l'access_token
-                const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-                });
-                if (!userInfoResponse.ok) {
-                    throw new Error("Google non ha restituito i dati del profilo. Riprova.");
-                }
-                const googleUser = await userInfoResponse.json();
-
-                // 2. Invia i dati utente decodificati al backend
-                const userInfo = await apiPost('/clienti/google', googleUser);
-                console.log("Utente: ", userInfo);
-                localStorage.setItem('user', JSON.stringify(userInfo));
-                if (rememberMe) {
-                    localStorage.setItem('rememberedEmail', formData.email);
-                    localStorage.setItem('rememberedPassword', formData.password);
-                } else {
-                    localStorage.removeItem('rememberedEmail');
-                    localStorage.removeItem('rememberedPassword');
-                }
-                setModal({
-                    show: true,
-                    title: "Accesso Effettuato",
-                    message: "Login con Google effettuato con successo!",
-                    type: "success",
-                    onConfirm: () => navigate("/")
-                });
-            }catch(error){
-                console.error(error);
-                setModal({
-                    show: true,
-                    title: "Errore",
-                    message: error.message,
-                    type: "error"
-                });
-            }
-
-        }
-    });
 
     return (
         
@@ -130,30 +79,7 @@ export default function LoginPage() {
             <Modal show={modal.show} onClose={closeModal} title={modal.title} message={modal.message} type={modal.type} />
             <form onSubmit={handleSubmit} className="flex w-full flex-col items-center justify-center max-w-96">
                 <Title title = "Accedi" subTitle = "Bentornato! Effettua l'accesso"></Title>
-                <div className="mt-10 mb-2 grid w-30">
-                    <button onClick = {() => loginConGoogle()}type="button" className="flex items-center justify-center rounded-full border border-gray-200 py-2.5 hover:bg-gray-50 focus:border-gray-300 cursor-pointer">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <g clip-path="url(#clip0_8755_1278)">
-                                <path d="M12 9.81836V14.4656H18.4582C18.1746 15.9602 17.3236 17.2257 16.0472 18.0766L19.9417 21.0984C22.2108 19.0039 23.5199 15.9276 23.5199 12.273C23.5199 11.4221 23.4436 10.6039 23.3017 9.81849L12 9.81836Z" fill="#4285F4" />
-                                <path d="M5.27657 14.2842L4.3982 14.9566L1.28906 17.3783C3.2636 21.2947 7.31058 24.0002 12.0014 24.0002C15.2414 24.0002 17.9577 22.9311 19.9432 21.0984L16.0487 18.0765C14.9796 18.7965 13.6159 19.2329 12.0014 19.2329C8.88146 19.2329 6.23063 17.1275 5.28147 14.2911L5.27657 14.2842Z" fill="#34A853" />
-                                <path d="M1.28718 6.62207C0.469042 8.23655 0 10.0584 0 12.0002C0 13.942 0.469042 15.7638 1.28718 17.3783C1.28718 17.3891 5.27997 14.2801 5.27997 14.2801C5.03998 13.5601 4.89812 12.7965 4.89812 12.0001C4.89812 11.2036 5.03998 10.44 5.27997 9.72L1.28718 6.62207Z" fill="#FBBC05" />
-                                <path d="M12.0017 4.77818C13.769 4.77818 15.3399 5.38907 16.5944 6.56727L20.0307 3.13095C17.9471 1.18917 15.2417 0 12.0017 0C7.31082 0 3.2636 2.69454 1.28906 6.62183L5.28174 9.72001C6.23077 6.88362 8.88171 4.77818 12.0017 4.77818Z" fill="#EA4335" />
-                            </g>
-                            <defs>
-                                <clipPath id="clip0_8755_1278">
-                                    <rect width="24" height="24" fill="white" />
-                                </clipPath>
-                            </defs>
-                        </svg>
-                    </button>
-
-                </div>
-                <div className="my-5 flex w-full items-center gap-4">
-                    <div className="h-px w-full bg-gray-300/90"></div>
-                    <p className="w-full text-sm text-nowrap text-gray-500/90">Accedi tramite email</p>
-                    <div className="h-px w-full bg-gray-300/90"></div>
-                </div>
-                <div className="flex h-12 w-full items-center gap-2 overflow-hidden rounded-full border border-gray-200 bg-transparent pl-5 focus-within:border-gray-300">
+                <div className="mt-10 flex h-12 w-full items-center gap-2 overflow-hidden rounded-full border border-gray-200 bg-transparent pl-5 focus-within:border-gray-300">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-mail text-gray-400" aria-hidden="true" >
                         <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path>
                         <rect x="2" y="4" width="20" height="16" rx="2"></rect>
