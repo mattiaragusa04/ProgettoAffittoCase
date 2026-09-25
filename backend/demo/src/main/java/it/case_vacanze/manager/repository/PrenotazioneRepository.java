@@ -1,6 +1,7 @@
 package it.case_vacanze.manager.repository;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,4 +18,10 @@ public interface PrenotazioneRepository extends JpaRepository<Prenotazione, Inte
     boolean existsSovrapposizione(@Param("stanzaId") Integer stanzaId,
                                   @Param("checkIn") LocalDate checkIn,
                                   @Param("checkOut") LocalDate checkOut);
+
+
+    // Prenotazioni di un cliente, dalla più recente. Serve @Query: il campo si chiama cliente_id
+    // e Spring non può ricavarlo dal nome del metodo (cercherebbe un campo "clienteId")
+    @Query("SELECT p FROM Prenotazione p WHERE p.cliente_id = :clienteId ORDER BY p.data_check_in DESC")
+    List<Prenotazione> findByClienteId(@Param("clienteId") Integer clienteId);
 }

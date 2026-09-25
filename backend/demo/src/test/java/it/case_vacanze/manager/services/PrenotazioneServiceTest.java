@@ -3,20 +3,27 @@ package it.case_vacanze.manager.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import it.case_vacanze.manager.dto.request.PrenotazioneRequest;
 import it.case_vacanze.manager.dto.response.PrenotazioneResponse;
+import it.case_vacanze.manager.entity.Clienti;
 import it.case_vacanze.manager.entity.Prenotazione;
 import it.case_vacanze.manager.entity.Stanze;
 import it.case_vacanze.manager.exception.ConflittoException;
@@ -42,7 +49,17 @@ class PrenotazioneServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(clientiRepository.existsById(1)).thenReturn(true);
+        // lenient: i test di findMie non controllano l'esistenza del cliente per id
+        lenient().when(clientiRepository.existsById(1)).thenReturn(true);
+    }
+
+    @AfterEach
+    void pulisciLogin() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private void loggatoCome(String email) {
+        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(email, null));
     }
 
     private PrenotazioneRequest richiesta(int persone) {
@@ -81,5 +98,31 @@ class PrenotazioneServiceTest {
         when(stanzeRepository.findById(10)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.crea(richiesta(2))).isInstanceOf(RisorsaNonTrovataException.class);
+    }
+
+    @Test
+    void mieCercaPerIlClienteDelToken() {
+        loggatoCome("mario@example.com");
+        Clienti mario = mock(Clienti.class);
+        when(mario.getId()).thenReturn(1);
+        when(clientiRepository.findByEmail("mario@example.com")).thenReturn(Optional.of(mario));
+        when(prenotazioneRepository.findByClienteId(1)).thenReturn(List.of(
+                new Prenotazione(CHECK_IN, CHECK_OUT, 150.0, 2, 1, 10)));
+
+        List<PrenotazioneResponse> mie = service.findMie();
+
+        assertThat(mie).hasSize(1);
+        assertThat(mie.get(0).clienteId()).isEqualTo(1);
+    }
+
+    @Test
+    void mieSenzaPrenotazioniRestituisceListaVuota() {
+        loggatoCome("nuovo@example.com");
+        Clienti nuovo = mock(Clienti.class);
+        when(nuovo.getId()).thenReturn(7);
+        when(clientiRepository.findByEmail("nuovo@example.com")).thenReturn(Optional.of(nuovo));
+        when(prenotazioneRepository.findByClienteId(7)).thenReturn(List.of());
+
+        assertThat(service.findMie()).isEmpty();
     }
 }

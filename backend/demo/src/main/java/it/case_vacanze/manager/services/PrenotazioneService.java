@@ -3,11 +3,13 @@ package it.case_vacanze.manager.services;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import it.case_vacanze.manager.dto.request.PrenotazioneRequest;
 import it.case_vacanze.manager.dto.response.PrenotazioneResponse;
+import it.case_vacanze.manager.entity.Clienti;
 import it.case_vacanze.manager.entity.Prenotazione;
 import it.case_vacanze.manager.entity.Stanze;
 import it.case_vacanze.manager.exception.ConflittoException;
@@ -53,8 +55,9 @@ public class PrenotazioneService {
             throw new ConflittoException("La stanza non è prenotabile");
         }
         if (req.numeroPersone() > stanza.getNumero_posti()) {
+            int posti = stanza.getNumero_posti();
             throw new RichiestaNonValidaException(
-                    "La stanza ospita al massimo " + stanza.getNumero_posti() + " persone");
+                    "La stanza ospita al massimo " + posti + (posti == 1 ? " persona" : " persone"));
         }
         if (prenotazioneRepository.existsSovrapposizione(stanza.getId(), req.checkIn(), req.checkOut())) {
             throw new ConflittoException("La stanza è già prenotata in queste date");
@@ -66,5 +69,16 @@ public class PrenotazioneService {
         Prenotazione prenotazione = new Prenotazione(req.checkIn(), req.checkOut(), prezzoTotale,
                 req.numeroPersone(), req.clienteId(), stanza.getId());
         return PrenotazioneMapper.toResponse(prenotazioneRepository.save(prenotazione));
+    }
+
+    // Prenotazioni dell'utente loggato (dal token), dalla più recente.
+    // Nessuna prenotazione non è un errore: restituisce una lista vuota.
+    public List<PrenotazioneResponse> findMie() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Clienti cliente = clientiRepository.findByEmail(email)
+                .orElseThrow(() -> new RisorsaNonTrovataException("Utente non trovato"));
+        return prenotazioneRepository.findByClienteId(cliente.getId()).stream()
+                .map(PrenotazioneMapper::toResponse)
+                .toList();
     }
 }

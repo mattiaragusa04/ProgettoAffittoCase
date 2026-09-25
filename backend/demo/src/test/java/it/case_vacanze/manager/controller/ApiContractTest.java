@@ -2,9 +2,11 @@ package it.case_vacanze.manager.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,15 +20,23 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.MockMvc;
 
 import it.case_vacanze.manager.config.CorsConfig;
+import it.case_vacanze.manager.config.SecurityConfig;
+import it.case_vacanze.manager.dto.response.AuthResponse;
 import it.case_vacanze.manager.dto.response.AutoreResponse;
 import it.case_vacanze.manager.dto.response.ClienteResponse;
 import it.case_vacanze.manager.dto.response.OffertaResponse;
+import it.case_vacanze.manager.dto.response.PrenotazioneResponse;
 import it.case_vacanze.manager.dto.response.RecensioneResponse;
+import it.case_vacanze.manager.entity.Ruolo;
 import it.case_vacanze.manager.exception.ConflittoException;
 import it.case_vacanze.manager.exception.CredenzialiNonValideException;
+import it.case_vacanze.manager.exception.RisorsaNonTrovataException;
 import it.case_vacanze.manager.services.ClienteService;
 import it.case_vacanze.manager.services.NewsletterService;
 import it.case_vacanze.manager.services.OffertaService;
@@ -36,7 +46,7 @@ import it.case_vacanze.manager.services.StanzaService;
 
 // Verifica che il JSON resti quello letto dal frontend React e che gli errori abbiano lo status giusto
 @WebMvcTest
-@Import(CorsConfig.class)
+@Import({CorsConfig.class, SecurityConfig.class})
 class ApiContractTest {
 
     @Autowired MockMvc mvc;
@@ -47,6 +57,12 @@ class ApiContractTest {
     @MockBean PrenotazioneService prenotazioneService;
     @MockBean RecensioneService recensioneService;
     @MockBean StanzaService stanzaService;
+
+    // jwt() di spring-security-test non ha annotazioni di nullità: lo adattiamo qui una volta sola
+    @SuppressWarnings("null")
+    private static @NonNull RequestPostProcessor conToken(JwtRequestPostProcessor token) {
+        return token;
+    }
 
     @Test
     void offerteUsanoICampiSnakeCase() throws Exception {
@@ -73,7 +89,7 @@ class ApiContractTest {
 
     @Test
     void recensioneConValutazioneFuoriScalaDa400() throws Exception {
-        mvc.perform(post("/recensioni").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/recensioni").with(conToken(jwt())).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"testo\":\"ok\",\"valutazione\":50,\"cliente_id\":1}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.dettagli.valutazione").value("La valutazione massima è 5"));
@@ -83,20 +99,113 @@ class ApiContractTest {
     void recensioneValidaDa201() throws Exception {
         when(recensioneService.crea(any())).thenReturn(new RecensioneResponse(1, "ok", 4, 1, null));
 
-        mvc.perform(post("/recensioni").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/recensioni").with(conToken(jwt())).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"testo\":\"ok\",\"valutazione\":4,\"cliente_id\":1}"))
                 .andExpect(status().isCreated());
     }
 
     @Test
+    void recensioneSenzaLoginDa401() throws Exception {
+        mvc.perform(post("/recensioni").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"testo\":\"ok\",\"valutazione\":4,\"cliente_id\":1}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.messaggio").value("Devi effettuare il login"));
+    }
+
+    @Test
     void loginNonRestituisceLaPassword() throws Exception {
-        when(clienteService.login(any())).thenReturn(new ClienteResponse(1, "Mario", "Rossi", "m@r.it", null));
+        when(clienteService.login(any())).thenReturn(new AuthResponse("token-di-prova",
+                new ClienteResponse(1, "Mario", "Rossi", "m@r.it", null, Ruolo.CLIENTE)));
 
         mvc.perform(post("/clienti/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"m@r.it\",\"password\":\"x!\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nome").value("Mario"))
+                .andExpect(jsonPath("$.token").value("token-di-prova"))
+                .andExpect(jsonPath("$.utente.nome").value("Mario"))
+                .andExpect(jsonPath("$.utente.ruolo").value("CLIENTE"))
+                .andExpect(jsonPath("$.utente.password").doesNotExist());
+    }
+
+    @Test
+    void datiUtenteConTokenSenzaPassword() throws Exception {
+        when(clienteService.getDatiUtente()).thenReturn(new ClienteResponse(1, "Mario", "Rossi", "m@r.it", null, Ruolo.CLIENTE));
+
+        mvc.perform(get("/clienti/me").with(conToken(jwt().jwt(t -> t.subject("m@r.it")))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("m@r.it"))
                 .andExpect(jsonPath("$.password").doesNotExist());
+    }
+
+    @Test
+    void datiUtenteSenzaTokenDa401() throws Exception {
+        mvc.perform(get("/clienti/me")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void datiUtenteCancellatoDa404() throws Exception {
+        when(clienteService.getDatiUtente()).thenThrow(new RisorsaNonTrovataException("Utente non trovato"));
+
+        mvc.perform(get("/clienti/me").with(conToken(jwt()))).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void modificaDatiUtente() throws Exception {
+        when(clienteService.modificaDatiUtente(any())).thenReturn(new ClienteResponse(1, "Marco", "Rossi", "m@r.it", null, Ruolo.CLIENTE));
+
+        mvc.perform(put("/clienti/me").with(conToken(jwt())).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"Marco\",\"cognome\":\"Rossi\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Marco"));
+    }
+
+    @Test
+    void modificaConNomeVuotoDa400() throws Exception {
+        mvc.perform(put("/clienti/me").with(conToken(jwt())).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\" \",\"cognome\":\"Rossi\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.dettagli.nome").value("Il nome è obbligatorio"));
+    }
+
+    @Test
+    void modificaSenzaLoginDa401() throws Exception {
+        mvc.perform(put("/clienti/me").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"Marco\",\"cognome\":\"Rossi\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void miePrenotazioniConToken() throws Exception {
+        when(prenotazioneService.findMie()).thenReturn(List.of(new PrenotazioneResponse(
+                1, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 8), 2, 540.0, 3, 6)));
+
+        mvc.perform(get("/prenotazione/mie").with(conToken(jwt())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].data_check_in").value("2026-10-05"))
+                .andExpect(jsonPath("$[0].prezzo_totale").value(540.0));
+    }
+
+    @Test
+    void miePrenotazioniSenzaLoginDa401() throws Exception {
+        mvc.perform(get("/prenotazione/mie")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tutteLePrenotazioniSoloAdmin() throws Exception {
+        mvc.perform(get("/prenotazione").with(conToken(jwt().jwt(t -> t.claim("ruolo", "CLIENTE")).authorities(SecurityConfig.ruoliDalToken()))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void elencoClientiVietatoAiClienti() throws Exception {
+        mvc.perform(get("/clienti").with(conToken(jwt().jwt(t -> t.claim("ruolo", "CLIENTE")).authorities(SecurityConfig.ruoliDalToken()))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.messaggio").value("Non hai i permessi per questa operazione"));
+    }
+
+    @Test
+    void elencoClientiConsentitoAllAdmin() throws Exception {
+        mvc.perform(get("/clienti").with(conToken(jwt().jwt(t -> t.claim("ruolo", "ADMIN")).authorities(SecurityConfig.ruoliDalToken()))))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -115,6 +224,15 @@ class ApiContractTest {
 
         mvc.perform(post("/newsletter").contentType(MediaType.APPLICATION_JSON).content("{\"email\":\"a@b.it\"}"))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void stanzaInesistenteDa404() throws Exception {
+        when(stanzaService.trova(99)).thenThrow(new RisorsaNonTrovataException("Stanza non trovata"));
+
+        mvc.perform(get("/stanze/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.messaggio").value("Stanza non trovata"));
     }
 
     @Test

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,6 +26,11 @@ public class StanzeController {
     @GetMapping
     public List<StanzaResponse> getAllStanze() {
         return stanzaService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public StanzaResponse getStanza(@PathVariable int id) {
+        return stanzaService.trova(id);
     }
 
     @GetMapping("/search")

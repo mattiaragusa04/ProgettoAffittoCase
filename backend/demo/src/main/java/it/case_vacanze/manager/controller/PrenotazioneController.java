@@ -35,4 +35,10 @@ public class PrenotazioneController {
     public PrenotazioneResponse createPrenotazione(@Valid @RequestBody PrenotazioneRequest req) {
         return prenotazioneService.crea(req);
     }
+
+    // Prenotazioni dell'utente loggato: l'utente arriva dal token, non dal client
+    @GetMapping("/mie")
+    public List<PrenotazioneResponse> getMiePrenotazioni() {
+        return prenotazioneService.findMie();
+    }
 }

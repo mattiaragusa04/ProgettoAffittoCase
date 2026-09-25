@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS clienti (
     email    VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     picture  VARCHAR(1000),
+    -- CLIENTE per chi si registra dal sito, ADMIN per il gestore (vede la Dashboard)
+    ruolo    VARCHAR(20)  NOT NULL DEFAULT 'CLIENTE',
     PRIMARY KEY (id),
     UNIQUE KEY uk_clienti_email (email)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -84,17 +86,34 @@ CREATE TABLE IF NOT EXISTS newsletter (
 
 
 -- ---------------------------------------------------------------------
+-- AGGIORNAMENTI DI TABELLE GIÀ ESISTENTI
+-- CREATE TABLE IF NOT EXISTS non modifica le tabelle create in passato:
+-- le colonne aggiunte dopo si creano qui, solo se mancano.
+-- ---------------------------------------------------------------------
+
+-- clienti.ruolo (aggiunta per distinguere l'amministratore)
+SET @manca := (SELECT COUNT(*) = 0 FROM information_schema.COLUMNS
+               WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clienti' AND COLUMN_NAME = 'ruolo');
+SET @sql := IF(@manca, 'ALTER TABLE clienti ADD COLUMN ruolo VARCHAR(20) NOT NULL DEFAULT ''CLIENTE''', 'DO 0');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+-- ---------------------------------------------------------------------
 -- DATI DI ESEMPIO
 -- ---------------------------------------------------------------------
 
 -- Clienti di prova. Tutti hanno password: Password1!
 -- (le password sono in chiaro perché il login oggi le confronta così)
-INSERT INTO clienti (id, nome, cognome, email, password, picture) VALUES
-    (1, 'Mario',  'Rossi',    'mario.rossi@example.com',    'Password1!', NULL),
-    (2, 'Giulia', 'Bianchi',  'giulia.bianchi@example.com', 'Password1!', NULL),
-    (3, 'Luca',   'Ferrari',  'luca.ferrari@example.com',   'Password1!', NULL),
-    (4, 'Sara',   'Esposito', 'sara.esposito@example.com',  'Password1!', NULL),
-    (5, 'Marco',  'Romano',   'marco.romano@example.com',   'Password1!', NULL)
+-- L'utente 6 è l'amministratore: admin@example.com / Admin123!
+INSERT INTO clienti (id, nome, cognome, email, password, picture, ruolo) VALUES
+    (1, 'Mario',  'Rossi',    'mario.rossi@example.com',    'Password1!', NULL, 'CLIENTE'),
+    (2, 'Giulia', 'Bianchi',  'giulia.bianchi@example.com', 'Password1!', NULL, 'CLIENTE'),
+    (3, 'Luca',   'Ferrari',  'luca.ferrari@example.com',   'Password1!', NULL, 'CLIENTE'),
+    (4, 'Sara',   'Esposito', 'sara.esposito@example.com',  'Password1!', NULL, 'CLIENTE'),
+    (5, 'Marco',  'Romano',   'marco.romano@example.com',   'Password1!', NULL, 'CLIENTE'),
+    (6, 'Admin',  'Ragusa',   'admin@example.com',          'Admin123!',  NULL, 'ADMIN')
 ON DUPLICATE KEY UPDATE id = id;
 
 INSERT INTO offerte (id, data_inizio, data_fine, prezzo_scontato, immagine_off) VALUES

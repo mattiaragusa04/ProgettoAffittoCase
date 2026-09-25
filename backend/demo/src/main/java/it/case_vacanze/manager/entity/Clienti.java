@@ -2,6 +2,8 @@ package it.case_vacanze.manager.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -23,6 +25,10 @@ public class Clienti{
     private String password;
     @Column(name = "picture")
     private String picture;
+    // Chi si registra dal sito è sempre CLIENTE: gli ADMIN si creano solo dal database
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ruolo")
+    private Ruolo ruolo = Ruolo.CLIENTE;
 
 
     public Clienti(String nome, String cognome, String email, String password, String picture) {
@@ -75,6 +81,10 @@ public class Clienti{
 
     public void setPicture(String picture) {
         this.picture = picture;
+    }
+
+    public Ruolo getRuolo() {
+        return ruolo;
     }
     
 

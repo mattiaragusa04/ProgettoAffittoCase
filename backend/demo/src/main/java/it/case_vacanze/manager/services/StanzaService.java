@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import it.case_vacanze.manager.dto.response.StanzaResponse;
 import it.case_vacanze.manager.exception.RichiestaNonValidaException;
+import it.case_vacanze.manager.exception.RisorsaNonTrovataException;
 import it.case_vacanze.manager.mapper.StanzaMapper;
 import it.case_vacanze.manager.repository.StanzeRepository;
 
@@ -23,6 +24,12 @@ public class StanzaService {
 
     public List<StanzaResponse> findAll() {
         return stanzeRepository.findAll().stream().map(StanzaMapper::toResponse).toList();
+    }
+
+    public StanzaResponse trova(int id) {
+        return stanzeRepository.findById(id)
+                .map(StanzaMapper::toResponse)
+                .orElseThrow(() -> new RisorsaNonTrovataException("Stanza non trovata"));
     }
 
     public List<StanzaResponse> cercaDisponibili(LocalDate checkIn, LocalDate checkOut, Integer ospiti) {

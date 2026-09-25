@@ -20,6 +20,7 @@ public interface StanzeRepository extends JpaRepository<Stanze, Integer> {
     List<Stanze> findAvailableRooms(@Param("checkIn") LocalDate checkIn, 
                                     @Param("checkOut") LocalDate checkOut, 
                                     @Param("guests") Integer guests);
+    
 
                                     
 }

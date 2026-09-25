@@ -18,7 +18,7 @@ public final class ClienteMapper {
 
     public static ClienteResponse toResponse(Clienti cliente) {
         return new ClienteResponse(cliente.getId(), cliente.getNome(), cliente.getCognome(),
-                cliente.getEmail(), cliente.getPicture());
+                cliente.getEmail(), cliente.getPicture(), cliente.getRuolo());
     }
 
     public static AutoreResponse toAutore(Clienti cliente) {
