@@ -3,6 +3,7 @@ package it.case_vacanze.manager.services;
 import java.util.List;
 
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,10 +25,13 @@ public class ClienteService {
 
     private final ClientiRepository clientiRepository;
     private final TokenService tokenService;
+    private final PasswordEncoder passwordEncoder;
 
-    public ClienteService(ClientiRepository clientiRepository, TokenService tokenService) {
+    public ClienteService(ClientiRepository clientiRepository, TokenService tokenService,
+                          PasswordEncoder passwordEncoder) {
         this.clientiRepository = clientiRepository;
         this.tokenService = tokenService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<ClienteResponse> findAll() {
@@ -54,11 +58,16 @@ public class ClienteService {
         if (clientiRepository.existsByEmail(req.email())) {
             throw new ConflittoException("Email già registrata");
         }
-        return autentica(clientiRepository.save(ClienteMapper.toEntity(req)));
+        Clienti cliente = ClienteMapper.toEntity(req);
+        cliente.setPassword(passwordEncoder.encode(req.password()));
+        return autentica(clientiRepository.save(cliente));
     }
 
+    // Con BCrypt la stessa password dà ogni volta un hash diverso: non si può cercare
+    // "email + password" nel database. Si cerca per email e si confronta l'hash in Java.
     public AuthResponse login(LoginRequest req) {
-        return clientiRepository.findByEmailAndPassword(req.email(), req.password())
+        return clientiRepository.findByEmail(req.email())
+                .filter(cliente -> passwordEncoder.matches(req.password(), cliente.getPassword()))
                 .map(this::autentica)
                 .orElseThrow(() -> new CredenzialiNonValideException("Email o password errati"));
     }

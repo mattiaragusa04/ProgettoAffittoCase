@@ -105,15 +105,15 @@ DEALLOCATE PREPARE stmt;
 -- ---------------------------------------------------------------------
 
 -- Clienti di prova. Tutti hanno password: Password1!
--- (le password sono in chiaro perché il login oggi le confronta così)
 -- L'utente 6 è l'amministratore: admin@example.com / Admin123!
+-- Le password sono salvate cifrate con BCrypt (generate con BCryptPasswordEncoder).
 INSERT INTO clienti (id, nome, cognome, email, password, picture, ruolo) VALUES
-    (1, 'Mario',  'Rossi',    'mario.rossi@example.com',    'Password1!', NULL, 'CLIENTE'),
-    (2, 'Giulia', 'Bianchi',  'giulia.bianchi@example.com', 'Password1!', NULL, 'CLIENTE'),
-    (3, 'Luca',   'Ferrari',  'luca.ferrari@example.com',   'Password1!', NULL, 'CLIENTE'),
-    (4, 'Sara',   'Esposito', 'sara.esposito@example.com',  'Password1!', NULL, 'CLIENTE'),
-    (5, 'Marco',  'Romano',   'marco.romano@example.com',   'Password1!', NULL, 'CLIENTE'),
-    (6, 'Admin',  'Ragusa',   'admin@example.com',          'Admin123!',  NULL, 'ADMIN')
+    (1, 'Mario',  'Rossi',    'mario.rossi@example.com',    '$2a$10$dkLEmqgdCY5ff1cWnl1Vy.CRsFjkZ3VJ9k2sZdwp4FAUIVDPawKKu', NULL, 'CLIENTE'),
+    (2, 'Giulia', 'Bianchi',  'giulia.bianchi@example.com', '$2a$10$oEJiEVpZc8r/QAV2uESh7.mfldokz2Jh4CG6Q3H.JIkD4/50ESjeW', NULL, 'CLIENTE'),
+    (3, 'Luca',   'Ferrari',  'luca.ferrari@example.com',   '$2a$10$t2p2M8CXxFnOhfPNBJ4kruCUR4oXQ1tQts/1azY7tOG1HoMsnryme', NULL, 'CLIENTE'),
+    (4, 'Sara',   'Esposito', 'sara.esposito@example.com',  '$2a$10$R0tB1jsYNy1EU4j3g.dua.7lak66aYTUvWb5UH16U.Jzj5EScsb8u', NULL, 'CLIENTE'),
+    (5, 'Marco',  'Romano',   'marco.romano@example.com',   '$2a$10$ahlUU3vgbNI/yLwrV/5tpeOI6KV4pPfYKPzewL6/SJxbmaRUxZSGu', NULL, 'CLIENTE'),
+    (6, 'Admin',  'Ragusa',   'admin@example.com',          '$2a$10$eJWsV/rQF2UxWgB3pE6jsuu6BFvac8E27upF.ARk1p1ZvezCoJada',  NULL, 'ADMIN')
 ON DUPLICATE KEY UPDATE id = id;
 
 INSERT INTO offerte (id, data_inizio, data_fine, prezzo_scontato, immagine_off) VALUES
