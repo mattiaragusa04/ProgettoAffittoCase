@@ -11,7 +11,8 @@ function statoSoggiorno(prenotazione) {
 }
 
 // Una prenotazione nella pagina "Le mie prenotazioni"
-export default function CardPrenotazione({ prenotazione, stanza }) {
+// onCancella è facoltativa: il bottone compare solo per i soggiorni non ancora iniziati
+export default function CardPrenotazione({ prenotazione, stanza, onCancella }) {
     const stato = statoSoggiorno(prenotazione);
     const notti = contaNotti(prenotazione.data_check_in, prenotazione.data_check_out);
 
@@ -45,9 +46,16 @@ export default function CardPrenotazione({ prenotazione, stanza }) {
                     <p className="text-lg font-medium">€{prenotazione.prezzo_totale.toFixed(2)}
                         <span className="text-sm text-gray-500 font-normal"> totale</span>
                     </p>
-                    <Link to={`/room/${prenotazione.stanza_id}`} className="text-sm underline text-gray-600 hover:text-black">
-                        Vedi la stanza
-                    </Link>
+                    <div className="flex items-center gap-4">
+                        {onCancella && stato.testo === 'In arrivo' && (
+                            <button type="button" onClick={() => onCancella(prenotazione.id)} className="text-sm underline text-red-600 hover:text-red-800">
+                                Annulla prenotazione
+                            </button>
+                        )}
+                        <Link to={`/room/${prenotazione.stanza_id}`} className="text-sm underline text-gray-600 hover:text-black">
+                            Vedi la stanza
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

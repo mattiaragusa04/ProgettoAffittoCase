@@ -23,6 +23,8 @@ export function chiudiSessione() {
 
 export const apiGet = (path) => richiesta(path, { method: 'GET' });
 
+export const apiDelete = (path) => richiesta(path, { method: 'DELETE' });
+
 export const apiPost = (path, body) => richiesta(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -77,7 +77,7 @@ const Navbar = () => {
             <nav className={`fixed top-0 left-0 w-full flex items-center justify-between px-4 md:px-8 lg:px-12 xl:px-16 transition-all duration-500 z-50 ${isScrolled ? "bg-white/80 shadow-md text-gray-700 backdrop-blur-lg py-3 md:py-4" : "py-4 md:py-6"}`}>
 
             {/* Logo */}
-            <Link to="/">
+            <Link to="/" className="flex-1">
                 <img src={assets.logo} alt="logo" className={`h-25 ${isScrolled && "invert opacity-80"}`} />
             </Link>
 
@@ -98,7 +98,7 @@ const Navbar = () => {
             </div>
 
             {/* Desktop Right */}
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden md:flex flex-1 items-center justify-end gap-4">
                 
 
                 {user ? (
@@ -149,14 +149,10 @@ const Navbar = () => {
                     </div>
 
                 ) : (
-                    location.pathname === "/login" || location.pathname === "/register" ? (
-                        <div className = "flex items-center gap-4 ml-50"></div>
-                    ) : (
-                        <>
-                            <button onClick={() => navigate("/login")} className={`px-8 py-2.5 rounded-full ml-4 transition-all duration-500 ${isScrolled ? "text-white bg-black" : "bg-white text-black"}`}>
-                                Sign up/Sign In
-                            </button>
-                        </>
+                    location.pathname !== "/login" && location.pathname !== "/register" && (
+                        <button onClick={() => navigate("/login")} className={`px-8 py-2.5 rounded-full ml-4 transition-all duration-500 ${isScrolled ? "text-white bg-black" : "bg-white text-black"}`}>
+                            Sign up/Sign In
+                        </button>
                     )
                 )}
             </div>
@@ -186,14 +182,10 @@ const Navbar = () => {
                             Logout
                         </button>
                     </>
-                ) : (location.pathname === "/login" || location.pathname === "/register" ? (
-                    <div className = "flex items-center gap-4 ml-50"></div>
-                ) : (
-                    <>
-                        <button onClick={() => {setIsMenuOpen(false); navigate("/login")}} className="bg-black text-white px-8 py-2.5 rounded-full transition-all duration-500">
-                            Sign up/Sign In
-                        </button>
-                    </>
+                ) : (location.pathname !== "/login" && location.pathname !== "/register" && (
+                    <button onClick={() => {setIsMenuOpen(false); navigate("/login")}} className="bg-black text-white px-8 py-2.5 rounded-full transition-all duration-500">
+                        Sign up/Sign In
+                    </button>
                 ))}
             </div>
         </nav>

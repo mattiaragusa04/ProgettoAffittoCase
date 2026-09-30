@@ -85,4 +85,6 @@ public class ClienteService {
     private AuthResponse autentica(Clienti cliente) {
         return new AuthResponse(tokenService.creaToken(cliente), ClienteMapper.toResponse(cliente));
     }
+
+    
 }

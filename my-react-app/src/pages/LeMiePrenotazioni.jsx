@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Title from '../components/Title';
 import CardPrenotazione from '../components/CardPrenotazione';
-import { apiGet } from '../api';
+import { apiGet, apiDelete } from '../api';
 import { oggi } from '../utils/date';
 
 export default function LeMiePrenotazioni() {
@@ -12,7 +12,7 @@ export default function LeMiePrenotazioni() {
     const [stanze, setStanze] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
+    const [erroreCancellazione, setErroreCancellazione] = useState(null);
     useEffect(() => {
         if (!utenteLoggato) return;
         const fetchPrenotazioni = async () => {
@@ -30,6 +30,18 @@ export default function LeMiePrenotazioni() {
         };
         fetchPrenotazioni();
     }, [utenteLoggato]);
+
+    const cancellaPrenotazione = async (id) => {
+        if (!window.confirm('Sei sicuro di voler cancellare questa prenotazione?')) return;
+        try {
+            await apiDelete(`/prenotazione/cancella/${id}`);
+            setPrenotazioni((prev) => prev.filter((p) => p.id !== id));
+            setErroreCancellazione(null);
+        } catch (err) {
+            setErroreCancellazione(err.message);
+        }
+    }
+
 
     if (!utenteLoggato) {
         return (
@@ -64,11 +76,12 @@ export default function LeMiePrenotazioni() {
                 </div>
             ) : (
                 <div className="max-w-4xl">
+                    {erroreCancellazione && <p className="mt-12 text-red-600">{erroreCancellazione}</p>}
                     {prossime.length > 0 && (
                         <>
                             <p className="mt-12 mb-6 text-lg font-medium">Prossimi soggiorni</p>
                             <div className="space-y-6">
-                                {prossime.map((p) => <CardPrenotazione key={p.id} prenotazione={p} stanza={stanze[p.stanza_id]} />)}
+                                {prossime.map((p) => <CardPrenotazione key={p.id} prenotazione={p} stanza={stanze[p.stanza_id]} onCancella={cancellaPrenotazione} />)}
                             </div>
                         </>
                     )}

@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.time.LocalDate;
 import it.case_vacanze.manager.dto.request.PrenotazioneRequest;
 import it.case_vacanze.manager.dto.response.PrenotazioneResponse;
 import it.case_vacanze.manager.entity.Clienti;
@@ -19,7 +19,6 @@ import it.case_vacanze.manager.mapper.PrenotazioneMapper;
 import it.case_vacanze.manager.repository.ClientiRepository;
 import it.case_vacanze.manager.repository.PrenotazioneRepository;
 import it.case_vacanze.manager.repository.StanzeRepository;
-
 @Service
 @Transactional(readOnly = true)
 public class PrenotazioneService {
@@ -80,5 +79,24 @@ public class PrenotazioneService {
         return prenotazioneRepository.findByClienteId(cliente.getId()).stream()
                 .map(PrenotazioneMapper::toResponse)
                 .toList();
+    }
+
+
+    @SuppressWarnings("null")
+    @Transactional
+    public void cancella(Integer id) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Clienti cliente = clientiRepository.findByEmail(email)
+                .orElseThrow(() -> new RisorsaNonTrovataException("Utente non trovato"));
+        Prenotazione prenotazione = prenotazioneRepository.findById(id)
+                .orElseThrow(() -> new RisorsaNonTrovataException("Prenotazione non trovata"));
+        // Stesso errore di "non esiste": chi prova id a caso non scopre le prenotazioni degli altri
+        if (!prenotazione.getCliente_id().equals(cliente.getId())) {
+            throw new RisorsaNonTrovataException("Prenotazione non trovata");
+        }
+        if (prenotazione.getData_check_in().isBefore(LocalDate.now())) {
+            throw new ConflittoException("Non puoi cancellare una prenotazione già iniziata");
+        }
+        prenotazioneRepository.delete(prenotazione);
     }
 }

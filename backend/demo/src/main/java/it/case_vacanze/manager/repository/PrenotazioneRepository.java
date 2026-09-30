@@ -24,4 +24,5 @@ public interface PrenotazioneRepository extends JpaRepository<Prenotazione, Inte
     // e Spring non può ricavarlo dal nome del metodo (cercherebbe un campo "clienteId")
     @Query("SELECT p FROM Prenotazione p WHERE p.cliente_id = :clienteId ORDER BY p.data_check_in DESC")
     List<Prenotazione> findByClienteId(@Param("clienteId") Integer clienteId);
+    Prenotazione findById(int id);
 }

@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.DeleteMapping;
 import it.case_vacanze.manager.dto.request.PrenotazioneRequest;
 import it.case_vacanze.manager.dto.response.PrenotazioneResponse;
 import it.case_vacanze.manager.services.PrenotazioneService;
 import jakarta.validation.Valid;
-
+import org.springframework.web.bind.annotation.PathVariable;
 @RestController
 @RequestMapping("/prenotazione")
 public class PrenotazioneController {
@@ -40,5 +40,10 @@ public class PrenotazioneController {
     @GetMapping("/mie")
     public List<PrenotazioneResponse> getMiePrenotazioni() {
         return prenotazioneService.findMie();
+    }
+
+    @DeleteMapping("/cancella/{id}")
+    public void cancellaPrenotazione(@PathVariable Integer id) {
+        prenotazioneService.cancella(id);
     }
 }
