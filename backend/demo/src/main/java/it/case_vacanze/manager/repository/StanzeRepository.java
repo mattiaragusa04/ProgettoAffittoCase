@@ -1,11 +1,13 @@
 package it.case_vacanze.manager.repository;
 
-import it.case_vacanze.manager.entity.Stanze;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import java.time.LocalDate;
-import java.util.List;
+
+import it.case_vacanze.manager.entity.Stanze;
 
 public interface StanzeRepository extends JpaRepository<Stanze, Integer> {
 
@@ -17,10 +19,10 @@ public interface StanzeRepository extends JpaRepository<Stanze, Integer> {
                    "    SELECT p.stanza_id FROM prenotazione p " +
                    "    WHERE (p.data_check_in < :checkOut AND p.data_check_out > :checkIn)" +
                    ")", nativeQuery = true)
-    List<Stanze> findAvailableRooms(@Param("checkIn") LocalDate checkIn, 
-                                    @Param("checkOut") LocalDate checkOut, 
+    List<Stanze> findAvailableRooms(@Param("checkIn") LocalDate checkIn,
+                                    @Param("checkOut") LocalDate checkOut,
                                     @Param("guests") Integer guests);
-    
 
-                                    
+    // Per non avere due stanze con lo stesso numero. L'inserimento usa save() di JpaRepository
+    boolean existsByNumero(Integer numero);
 }

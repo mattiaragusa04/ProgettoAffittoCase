@@ -33,6 +33,7 @@ import it.case_vacanze.manager.dto.response.ClienteResponse;
 import it.case_vacanze.manager.dto.response.OffertaResponse;
 import it.case_vacanze.manager.dto.response.PrenotazioneResponse;
 import it.case_vacanze.manager.dto.response.RecensioneResponse;
+import it.case_vacanze.manager.dto.response.StanzaResponse;
 import it.case_vacanze.manager.entity.Ruolo;
 import it.case_vacanze.manager.exception.ConflittoException;
 import it.case_vacanze.manager.exception.CredenzialiNonValideException;
@@ -263,5 +264,42 @@ class ApiContractTest {
                         .header("Origin", "https://sito-malevolo.example")
                         .header("Access-Control-Request-Method", "POST"))
                 .andExpect(status().isForbidden());
+    }
+
+    private static final String NUOVA_STANZA = "{\"numero\":201,\"numero_posti\":2,\"prezzo\":80.0,"
+            + "\"immagine\":\"img.png\",\"descrizione\":\"Vista mare\",\"tipo\":\"Doppia\"}";
+
+    @Test
+    void adminCreaStanzaDa201() throws Exception {
+        when(stanzaService.crea(any())).thenReturn(
+                new StanzaResponse(7, 201, 2, true, 80.0, "img.png", "Vista mare", "Doppia", 0.0, null));
+
+        mvc.perform(post("/stanze").with(conToken(jwt().jwt(t -> t.claim("ruolo", "ADMIN")).authorities(SecurityConfig.ruoliDalToken())))
+                        .contentType(MediaType.APPLICATION_JSON).content(NUOVA_STANZA))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(7))
+                .andExpect(jsonPath("$.numero_posti").value(2));
+    }
+
+    @Test
+    void creaStanzaVietatoAiClienti() throws Exception {
+        mvc.perform(post("/stanze").with(conToken(jwt().jwt(t -> t.claim("ruolo", "CLIENTE")).authorities(SecurityConfig.ruoliDalToken())))
+                        .contentType(MediaType.APPLICATION_JSON).content(NUOVA_STANZA))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void creaStanzaSenzaLoginDa401() throws Exception {
+        mvc.perform(post("/stanze").contentType(MediaType.APPLICATION_JSON).content(NUOVA_STANZA))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void creaStanzaSenzaPostiDa400() throws Exception {
+        mvc.perform(post("/stanze").with(conToken(jwt().jwt(t -> t.claim("ruolo", "ADMIN")).authorities(SecurityConfig.ruoliDalToken())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"numero\":201,\"prezzo\":80.0,\"immagine\":\"img.png\",\"descrizione\":\"Vista mare\",\"tipo\":\"Doppia\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.dettagli.numeroPosti").value("Il numero di posti è obbligatorio"));
     }
 }

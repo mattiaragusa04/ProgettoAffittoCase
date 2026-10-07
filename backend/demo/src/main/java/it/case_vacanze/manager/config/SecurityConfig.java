@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/stanze/**", "/offerte", "/recensioni").permitAll()
                         // solo amministratore
                         .requestMatchers(HttpMethod.GET, "/clienti", "/prenotazione", "/newsletter").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/offerte").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/offerte", "/stanze", "/stanze/*/delete").hasRole("ADMIN")
                         // tutto il resto (dati personali, prenotare, recensire): basta essere loggati
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth

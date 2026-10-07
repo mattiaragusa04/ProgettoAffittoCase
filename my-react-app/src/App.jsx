@@ -14,6 +14,7 @@ import TutteOfferte from "./pages/TutteOfferte";
 import DettaglioStanza from "./pages/DettaglioStanza";
 import DatiPersonali from "./pages/DatiPersonali";
 import LeMiePrenotazioni from "./pages/LeMiePrenotazioni";
+import OwnerPage from './pages/Owner';
 function App(){
   const isOwnerPath = useLocation().pathname.includes("owner"); //nascosta: qui dentro c'è il proprietario, che sarei io!
   return (
@@ -33,6 +34,7 @@ function App(){
             <Route path = "/room/:id" element = {<DettaglioStanza/>}/>
             <Route path = "/datiPersonali" element = {<DatiPersonali/>}/>
             <Route path = "/leMiePrenotazioni" element = {<LeMiePrenotazioni/>}/>
+            <Route path = "/owner" element = {<OwnerPage/>}/>
           </Routes>
          </div>
         {!isOwnerPath && <Footer/>}

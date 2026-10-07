@@ -25,4 +25,8 @@ public interface PrenotazioneRepository extends JpaRepository<Prenotazione, Inte
     @Query("SELECT p FROM Prenotazione p WHERE p.cliente_id = :clienteId ORDER BY p.data_check_in DESC")
     List<Prenotazione> findByClienteId(@Param("clienteId") Integer clienteId);
     Prenotazione findById(int id);
+
+    // true se la stanza ha almeno una prenotazione
+    @Query("SELECT COUNT(p) > 0 FROM Prenotazione p WHERE p.stanza_id = :stanzaId")
+    boolean existsByStanzaId(@Param("stanzaId") Integer stanzaId);
 }
