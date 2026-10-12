@@ -30,11 +30,10 @@ function RecensionePage() {
             return;
         }
 
-        // Costruiamo l'oggetto esattamente come lo aspetta l'Entity Java
+        // L'autore non si invia: il backend lo prende dal token
         const payload = {
             testo: formData.message,
-            valutazione: rating,
-            cliente_id: user.id
+            valutazione: rating
         };
 
         try {

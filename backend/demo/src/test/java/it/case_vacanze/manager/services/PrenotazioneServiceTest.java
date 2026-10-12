@@ -49,8 +49,11 @@ class PrenotazioneServiceTest {
 
     @BeforeEach
     void setUp() {
-        // lenient: i test di findMie non controllano l'esistenza del cliente per id
-        lenient().when(clientiRepository.existsById(1)).thenReturn(true);
+        // Di default è loggato Mario (id 1). lenient: non tutti i test passano dal suo login
+        loggatoCome("mario@example.com");
+        Clienti mario = mock(Clienti.class);
+        lenient().when(mario.getId()).thenReturn(1);
+        lenient().when(clientiRepository.findByEmail("mario@example.com")).thenReturn(Optional.of(mario));
     }
 
     @AfterEach
@@ -63,7 +66,7 @@ class PrenotazioneServiceTest {
     }
 
     private PrenotazioneRequest richiesta(int persone) {
-        return new PrenotazioneRequest(CHECK_IN, CHECK_OUT, persone, 1, 10);
+        return new PrenotazioneRequest(CHECK_IN, CHECK_OUT, persone, 10);
     }
 
     @Test
@@ -76,6 +79,29 @@ class PrenotazioneServiceTest {
 
         assertThat(res.prezzoTotale()).isEqualTo(150.0); // 3 notti x 50
         assertThat(res.numeroPersone()).isEqualTo(2);
+    }
+
+    @Test
+    @SuppressWarnings("null") // any() di Mockito restituisce null per costruzione
+    void prenotaComeUtenteDelTokenNonComeAltri() {
+        loggatoCome("luigi@example.com");
+        Clienti luigi = mock(Clienti.class);
+        when(luigi.getId()).thenReturn(2);
+        when(clientiRepository.findByEmail("luigi@example.com")).thenReturn(Optional.of(luigi));
+        when(stanzeRepository.findById(10)).thenReturn(Optional.of(stanza));
+        when(prenotazioneRepository.save(any())).thenAnswer(inv -> inv.<Prenotazione>getArgument(0));
+
+        PrenotazioneResponse res = service.crea(richiesta(2));
+
+        assertThat(res.clienteId()).isEqualTo(2);
+    }
+
+    @Test
+    void utenteDelTokenInesistenteDa404() {
+        loggatoCome("cancellato@example.com");
+        when(clientiRepository.findByEmail("cancellato@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.crea(richiesta(2))).isInstanceOf(RisorsaNonTrovataException.class);
     }
 
     @Test

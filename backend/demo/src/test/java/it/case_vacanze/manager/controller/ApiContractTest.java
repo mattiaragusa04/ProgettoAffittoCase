@@ -91,7 +91,7 @@ class ApiContractTest {
     @Test
     void recensioneConValutazioneFuoriScalaDa400() throws Exception {
         mvc.perform(post("/recensioni").with(conToken(jwt())).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"testo\":\"ok\",\"valutazione\":50,\"cliente_id\":1}"))
+                        .content("{\"testo\":\"ok\",\"valutazione\":50}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.dettagli.valutazione").value("La valutazione massima è 5"));
     }
@@ -101,14 +101,14 @@ class ApiContractTest {
         when(recensioneService.crea(any())).thenReturn(new RecensioneResponse(1, "ok", 4, 1, null));
 
         mvc.perform(post("/recensioni").with(conToken(jwt())).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"testo\":\"ok\",\"valutazione\":4,\"cliente_id\":1}"))
+                        .content("{\"testo\":\"ok\",\"valutazione\":4}"))
                 .andExpect(status().isCreated());
     }
 
     @Test
     void recensioneSenzaLoginDa401() throws Exception {
         mvc.perform(post("/recensioni").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"testo\":\"ok\",\"valutazione\":4,\"cliente_id\":1}"))
+                        .content("{\"testo\":\"ok\",\"valutazione\":4}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.messaggio").value("Devi effettuare il login"));
     }

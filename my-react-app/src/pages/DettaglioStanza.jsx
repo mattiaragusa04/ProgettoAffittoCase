@@ -76,12 +76,11 @@ function DettaglioStanza() {
 
         setInvio(true);
         try {
-            // Il prezzo non si invia: lo calcola il backend
+            // Il prezzo non si invia: lo calcola il backend. Il cliente nemmeno: lo prende dal token
             const risultato = await apiPost('/prenotazione', {
                 data_check_in: prenotazione.checkIn,
                 data_check_out: prenotazione.checkOut,
                 numero_persone: Number(prenotazione.ospiti),
-                cliente_id: user.id,
                 stanza_id: stanza.id,
             });
             setModal({

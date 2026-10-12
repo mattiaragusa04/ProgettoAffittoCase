@@ -2,6 +2,7 @@ package it.case_vacanze.manager.services;
 
 import java.util.List;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,10 +31,12 @@ public class RecensioneService {
         return recensioneRepository.findAll().stream().map(RecensioneMapper::toResponse).toList();
     }
 
+    // L'autore è l'utente loggato (dal token), non un id mandato dal client
     @Transactional
     public RecensioneResponse crea(RecensioneRequest req) {
-        Clienti cliente = clientiRepository.findById(req.clienteId())
-                .orElseThrow(() -> new RisorsaNonTrovataException("Cliente non trovato"));
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Clienti cliente = clientiRepository.findByEmail(email)
+                .orElseThrow(() -> new RisorsaNonTrovataException("Utente non trovato"));
         Recensioni recensione = new Recensioni(req.testo(), req.valutazione(), cliente);
         return RecensioneMapper.toResponse(recensioneRepository.save(recensione));
     }

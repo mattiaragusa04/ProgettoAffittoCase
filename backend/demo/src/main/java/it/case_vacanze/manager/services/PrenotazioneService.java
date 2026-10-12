@@ -44,9 +44,7 @@ public class PrenotazioneService {
         if (!req.checkOut().isAfter(req.checkIn())) {
             throw new RichiestaNonValidaException("Il check-out deve essere successivo al check-in");
         }
-        if (!clientiRepository.existsById(req.clienteId())) {
-            throw new RisorsaNonTrovataException("Cliente non trovato");
-        }
+        Clienti cliente = clienteLoggato();
         Stanze stanza = stanzeRepository.findById(req.stanzaId())
                 .orElseThrow(() -> new RisorsaNonTrovataException("Stanza non trovata"));
 
@@ -66,17 +64,14 @@ public class PrenotazioneService {
         double prezzoTotale = notti * stanza.getPrezzo();
 
         Prenotazione prenotazione = new Prenotazione(req.checkIn(), req.checkOut(), prezzoTotale,
-                req.numeroPersone(), req.clienteId(), stanza.getId());
+                req.numeroPersone(), cliente.getId(), stanza.getId());
         return PrenotazioneMapper.toResponse(prenotazioneRepository.save(prenotazione));
     }
 
     // Prenotazioni dell'utente loggato (dal token), dalla più recente.
     // Nessuna prenotazione non è un errore: restituisce una lista vuota.
     public List<PrenotazioneResponse> findMie() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Clienti cliente = clientiRepository.findByEmail(email)
-                .orElseThrow(() -> new RisorsaNonTrovataException("Utente non trovato"));
-        return prenotazioneRepository.findByClienteId(cliente.getId()).stream()
+        return prenotazioneRepository.findByClienteId(clienteLoggato().getId()).stream()
                 .map(PrenotazioneMapper::toResponse)
                 .toList();
     }
@@ -85,9 +80,7 @@ public class PrenotazioneService {
     @SuppressWarnings("null")
     @Transactional
     public void cancella(Integer id) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Clienti cliente = clientiRepository.findByEmail(email)
-                .orElseThrow(() -> new RisorsaNonTrovataException("Utente non trovato"));
+        Clienti cliente = clienteLoggato();
         Prenotazione prenotazione = prenotazioneRepository.findById(id)
                 .orElseThrow(() -> new RisorsaNonTrovataException("Prenotazione non trovata"));
         // Stesso errore di "non esiste": chi prova id a caso non scopre le prenotazioni degli altri
@@ -98,5 +91,12 @@ public class PrenotazioneService {
             throw new ConflittoException("Non puoi cancellare una prenotazione già iniziata");
         }
         prenotazioneRepository.delete(prenotazione);
+    }
+
+    // L'utente loggato, dall'email nel token: mai fidarsi di un id mandato dal client
+    private Clienti clienteLoggato() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return clientiRepository.findByEmail(email)
+                .orElseThrow(() -> new RisorsaNonTrovataException("Utente non trovato"));
     }
 }
